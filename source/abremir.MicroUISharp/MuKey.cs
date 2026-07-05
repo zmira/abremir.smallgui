@@ -1,0 +1,12 @@
+namespace abremir.MicroUISharp;
+
+[Flags]
+public enum MuKey
+{
+    None = 0,
+    Shift = 1 << 0,
+    Ctrl = 1 << 1,
+    Alt = 1 << 2,
+    Backspace = 1 << 3,
+    Return = 1 << 4,
+}
