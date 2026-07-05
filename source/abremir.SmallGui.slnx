@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="abremir.SmallGui.Demo/abremir.SmallGui.Demo.csproj" />
+  <Project Path="abremir.SmallGui/abremir.SmallGui.csproj" />
+  <Project Path="abremir.MicroUISharp/abremir.MicroUISharp.csproj" />
+</Solution>
