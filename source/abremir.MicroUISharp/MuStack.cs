@@ -1,19 +1,9 @@
 namespace abremir.MicroUISharp;
 
-// ========================================================================
-// Stack Implementation (Pre-allocated, Zero Garbage collection)
-// ========================================================================
-
-public class MuStack<T>
+public class MuStack<T>(int capacity)
 {
-    public int Idx;
-    public readonly T[] Items;
-
-    public MuStack(int capacity)
-    {
-        Items = new T[capacity];
-        Idx = 0;
-    }
+    public int Idx = 0;
+    public readonly T[] Items = new T[capacity];
 
     public void Push(T val)
     {
@@ -38,4 +28,3 @@ public class MuStack<T>
 
     public void Clear() => Idx = 0;
 }
-

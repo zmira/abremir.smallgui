@@ -1,12 +1,9 @@
 namespace abremir.MicroUISharp;
 
-public struct MuRect
+public struct MuRect(int x, int y, int w, int h)
 {
-    public int X;
-    public int Y;
-    public int W;
-    public int H;
-
-    public MuRect(int x, int y, int w, int h) { X = x; Y = y; W = w; H = h; }
+    public int X = x;
+    public int Y = y;
+    public int W = w;
+    public int H = h;
 }
-

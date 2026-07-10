@@ -1,9 +1,5 @@
 namespace abremir.MicroUISharp;
 
-// ========================================================================
-// Style and Command Structures
-// ========================================================================
-
 public class MuStyle
 {
     public object? Font;
@@ -43,4 +39,3 @@ public class MuStyle
         Colors[MuColorType.ScrollThumb] = new MuColor(30, 30, 30, 255);
     }
 }
-

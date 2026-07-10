@@ -1,11 +1,9 @@
 namespace abremir.MicroUISharp;
 
-public struct MuColor
+public struct MuColor(byte r, byte g, byte b, byte a)
 {
-    public byte R;
-    public byte G;
-    public byte B;
-    public byte A;
-
-    public MuColor(byte r, byte g, byte b, byte a) { R = r; G = g; B = b; A = a; }
+    public byte R = r;
+    public byte G = g;
+    public byte B = b;
+    public byte A = a;
 }

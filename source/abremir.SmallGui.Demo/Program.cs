@@ -176,7 +176,7 @@ void LogWindow(MuContext context)
         /* input textbox + submit button */
         context.LayoutRow(2, [-70, -1], 0);
         bool submitted = false;
-        if ((context.Textbox(ref textboxBuffer) & MuResult.Submit) != 0)
+        if ((context.Textbox(ref textboxBuffer) & MuResult.Submit) != MuResult.None)
         {
             context.SetFocus(context.LastId);
             submitted = true;
@@ -223,7 +223,7 @@ void WriteLog(string message)
 
 byte ColorSlider(MuContext context, byte value, byte low, byte high, string expression)
 {
-    float tmp = (float)value;
+    float tmp = value;
     MuResult result = context.Slider(ref tmp, low, high, expression: expression);
     value = (byte)tmp;
 

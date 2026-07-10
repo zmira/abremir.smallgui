@@ -14,4 +14,3 @@ public struct MuLayout
     public int NextType;
     public int Indent;
 }
-

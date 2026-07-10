@@ -1,9 +1,7 @@
 namespace abremir.MicroUISharp;
 
-public struct MuVec2
+public struct MuVec2(int x, int y)
 {
-    public int X;
-    public int Y;
-
-    public MuVec2(int x, int y) { X = x; Y = y; }
+    public int X = x;
+    public int Y = y;
 }

@@ -19,7 +19,7 @@ public class MuContext
     public const int MaxWidths = 16;
 
     public const uint HashInitial = 2166136261;
-    public static readonly MuRect UnclippedRect = new MuRect(0, 0, 0x1000000, 0x1000000);
+    public static readonly MuRect UnclippedRect = new(0, 0, 0x1000000, 0x1000000);
 
     // Callbacks (Delegates)
     public Func<object, string, int, int> TextWidth;
@@ -89,7 +89,9 @@ public class MuContext
     {
         ctx.DrawRect(rect, ctx.Style.Colors[colorType]);
         if (colorType == MuColorType.ScrollBase || colorType == MuColorType.ScrollThumb || colorType == MuColorType.TitleBg)
+        {
             return;
+        }
 
         if (ctx.Style.Colors[MuColorType.Border].A > 0)
         {
@@ -101,10 +103,8 @@ public class MuContext
     // Helpers (Math & Geometry)
     // ========================================================================
 
-    public static MuRect ExpandRect(MuRect rect, int n)
-    {
-        return new MuRect(rect.X - n, rect.Y - n, rect.W + n * 2, rect.H + n * 2);
-    }
+    public static MuRect ExpandRect(MuRect rect, int n) =>
+        new MuRect(rect.X - n, rect.Y - n, rect.W + n * 2, rect.H + n * 2);
 
     public static MuRect IntersectRects(MuRect r1, MuRect r2)
     {
@@ -114,13 +114,12 @@ public class MuContext
         int y2 = int.Min(r1.Y + r1.H, r2.Y + r2.H);
         if (x2 < x1) x2 = x1;
         if (y2 < y1) y2 = y1;
+
         return new MuRect(x1, y1, x2 - x1, y2 - y1);
     }
 
-    public static bool RectOverlapsVec2(MuRect r, MuVec2 p)
-    {
-        return p.X >= r.X && p.X < r.X + r.W && p.Y >= r.Y && p.Y < r.Y + r.H;
-    }
+    public static bool RectOverlapsVec2(MuRect r, MuVec2 p) =>
+        p.X >= r.X && p.X < r.X + r.W && p.Y >= r.Y && p.Y < r.Y + r.H;
 
     // ========================================================================
     // Core Control Frame Transitions (Begin / End)
@@ -129,7 +128,9 @@ public class MuContext
     public void Begin()
     {
         if (TextWidth == null || TextHeight == null)
-            throw new InvalidOperationException("MicroUI Callback delegates (TextWidth, TextHeight) are unassigned.");
+        {
+            throw new InvalidOperationException("MicroUISharp Callback delegates (TextWidth, TextHeight) are unassigned.");
+        }
 
         CommandList.Clear();
         RootList.Clear();
@@ -143,10 +144,22 @@ public class MuContext
 
     public void End()
     {
-        if (ContainerStack.Idx != 0) throw new InvalidOperationException("Mismatched window push/pop states.");
-        if (ClipStack.Idx != 0) throw new InvalidOperationException("Mismatched clipping push/pop states.");
-        if (IdStack.Idx != 0) throw new InvalidOperationException("Mismatched ID stack push/pop states.");
-        if (LayoutStack.Idx != 0) throw new InvalidOperationException("Mismatched Layout stack push/pop states.");
+        if (ContainerStack.Idx != 0)
+        {
+            throw new InvalidOperationException("Mismatched window push/pop states.");
+        }
+        if (ClipStack.Idx != 0)
+        {
+            throw new InvalidOperationException("Mismatched clipping push/pop states.");
+        }
+        if (IdStack.Idx != 0)
+        {
+            throw new InvalidOperationException("Mismatched ID stack push/pop states.");
+        }
+        if (LayoutStack.Idx != 0)
+        {
+            throw new InvalidOperationException("Mismatched Layout stack push/pop states.");
+        }
 
         if (ScrollTargetIdx != -1)
         {
@@ -154,10 +167,13 @@ public class MuContext
             Containers[ScrollTargetIdx].Scroll.Y += ScrollDelta.Y;
         }
 
-        if (!UpdatedFocus) Focus = 0;
+        if (!UpdatedFocus)
+        {
+            Focus = 0;
+        }
         UpdatedFocus = false;
 
-        if (MousePressed != 0 && NextHoverRootIdx != -1 &&
+        if (MousePressed != MuMouse.None && NextHoverRootIdx != -1 &&
             Containers[NextHoverRootIdx].ZIndex < LastZIndex &&
             Containers[NextHoverRootIdx].ZIndex >= 0)
         {
@@ -215,6 +231,7 @@ public class MuContext
             hashVal = (hashVal ^ (byte)(c & 0xFF)) * 16777619;
             hashVal = (hashVal ^ (byte)((c >> 8) & 0xFF)) * 16777619;
         }
+
         return hashVal;
     }
 
@@ -224,6 +241,7 @@ public class MuContext
         hashVal = (hashVal ^ (byte)((val >> 8) & 0xFF)) * 16777619;
         hashVal = (hashVal ^ (byte)((val >> 16) & 0xFF)) * 16777619;
         hashVal = (hashVal ^ (byte)((val >> 24) & 0xFF)) * 16777619;
+
         return hashVal;
     }
 
@@ -233,6 +251,7 @@ public class MuContext
         uint res = (idx > 0) ? IdStack.Items[idx - 1] : HashInitial;
         res = HashFnv1A(res, str);
         LastId = res;
+
         return res;
     }
 
@@ -242,6 +261,7 @@ public class MuContext
         uint res = (idx > 0) ? IdStack.Items[idx - 1] : HashInitial;
         res = HashFnv1A(res, val);
         LastId = res;
+
         return res;
     }
 
@@ -251,13 +271,21 @@ public class MuContext
         uint res = (idx > 0) ? IdStack.Items[idx - 1] : HashInitial;
         res = HashFnv1A(res, obj.GetHashCode());
         LastId = res;
+
         return res;
     }
 
-    public void PushId(string str) => IdStack.Push(GetId(str));
-    public void PushId(int val) => IdStack.Push(GetId(val));
-    public void PushId(object obj) => IdStack.Push(GetId(obj));
-    public void PopId() => IdStack.Pop();
+    public void PushId(string str) =>
+        IdStack.Push(GetId(str));
+
+    public void PushId(int val) =>
+        IdStack.Push(GetId(val));
+
+    public void PushId(object obj) =>
+        IdStack.Push(GetId(obj));
+
+    public void PopId() =>
+        IdStack.Pop();
 
     // ========================================================================
     // Clipping State Controls
@@ -269,11 +297,16 @@ public class MuContext
         ClipStack.Push(IntersectRects(rect, last));
     }
 
-    public void PopClipRect() => ClipStack.Pop();
+    public void PopClipRect() =>
+        ClipStack.Pop();
 
     public MuRect GetClipRect()
     {
-        if (ClipStack.Idx <= 0) throw new InvalidOperationException("Clip stack is empty.");
+        if (ClipStack.Idx <= 0)
+        {
+            throw new InvalidOperationException("Clip stack is empty.");
+        }
+
         return ClipStack.Items[ClipStack.Idx - 1];
     }
 
@@ -281,9 +314,14 @@ public class MuContext
     {
         MuRect cr = GetClipRect();
         if (r.X > cr.X + cr.W || r.X + r.W < cr.X || r.Y > cr.Y + cr.H || r.Y + r.H < cr.Y)
+        {
             return MuClip.All;
+        }
         if (r.X >= cr.X && r.X + r.W <= cr.X + cr.W && r.Y >= cr.Y && r.Y + r.H <= cr.Y + cr.H)
+        {
             return 0;
+        }
+
         return MuClip.Part;
     }
 
@@ -303,9 +341,13 @@ public class MuContext
                 n = i;
             }
         }
-        if (n == -1) throw new InvalidOperationException("State cache pool exceeded.");
+        if (n == -1)
+        {
+            throw new InvalidOperationException("State cache pool exceeded.");
+        }
         items[n].Id = id;
         PoolUpdate(items, n);
+
         return n;
     }
 
@@ -313,15 +355,17 @@ public class MuContext
     {
         for (int i = 0; i < len; i++)
         {
-            if (items[i].Id == id) return i;
+            if (items[i].Id == id)
+            {
+                return i;
+            }
         }
+
         return -1;
     }
 
-    public void PoolUpdate(MuPoolItem[] items, int idx)
-    {
+    public void PoolUpdate(MuPoolItem[] items, int idx) =>
         items[idx].LastUpdate = Frame;
-    }
 
     // ========================================================================
     // Layout Calculations
@@ -329,7 +373,7 @@ public class MuContext
 
     private void PushLayout(MuRect body, MuVec2 scroll)
     {
-        MuLayout layout = new MuLayout();
+        MuLayout layout = new();
         layout.Widths = new MuWidths();
         layout.Body = new MuRect(body.X - scroll.X, body.Y - scroll.Y, body.W, body.H);
         layout.Max = new MuVec2(-0x1000000, -0x1000000);
@@ -339,7 +383,11 @@ public class MuContext
 
     private ref MuLayout GetLayout()
     {
-        if (LayoutStack.Idx <= 0) throw new InvalidOperationException("Layout stack underflow.");
+        if (LayoutStack.Idx <= 0)
+        {
+            throw new InvalidOperationException("Layout stack underflow.");
+        }
+
         return ref LayoutStack.Items[LayoutStack.Idx - 1];
     }
 
@@ -357,27 +405,33 @@ public class MuContext
 
     public int GetCurrentContainerIdx()
     {
-        if (ContainerStack.Idx <= 0) throw new InvalidOperationException("Container context stack is empty.");
+        if (ContainerStack.Idx <= 0)
+        {
+            throw new InvalidOperationException("Container context stack is empty.");
+        }
+
         return ContainerStack.Items[ContainerStack.Idx - 1];
     }
 
-    public ref MuContainer GetCurrentContainer()
-    {
-        return ref Containers[GetCurrentContainerIdx()];
-    }
+    public ref MuContainer GetCurrentContainer() =>
+        ref Containers[GetCurrentContainerIdx()];
 
     private int GetContainerIdx(uint id, MuOption opt)
     {
         int idx = PoolGet(ContainerPool, ContainerPoolSize, id);
         if (idx >= 0)
         {
-            if (Containers[idx].Open || (opt & MuOption.Closed) == 0)
+            if (Containers[idx].Open || (opt & MuOption.Closed) == MuOption.None)
             {
                 PoolUpdate(ContainerPool, idx);
             }
+
             return idx;
         }
-        if ((opt & MuOption.Closed) != 0) return -1;
+        if ((opt & MuOption.Closed) != MuOption.None)
+        {
+            return -1;
+        }
 
         idx = PoolInit(ContainerPool, ContainerPoolSize, id);
         Containers[idx] = new MuContainer
@@ -387,18 +441,15 @@ public class MuContext
             TailIdx = -1
         };
         BringToFront(idx);
+
         return idx;
     }
 
-    public int GetContainerIdx(string name)
-    {
-        return GetContainerIdx(GetId(name), MuOption.None);
-    }
+    public int GetContainerIdx(string name) =>
+        GetContainerIdx(GetId(name), MuOption.None);
 
-    public void BringToFront(int cntIdx)
-    {
+    public void BringToFront(int cntIdx) =>
         Containers[cntIdx].ZIndex = ++LastZIndex;
-    }
 
     // ========================================================================
     // Layout Execution Pipeline
@@ -409,7 +460,10 @@ public class MuContext
         ref MuLayout layout = ref GetLayout();
         if (widths != null)
         {
-            if (items > MaxWidths) throw new ArgumentOutOfRangeException(nameof(items), "Row layout items limit exceeded.");
+            if (items > MaxWidths)
+            {
+                throw new ArgumentOutOfRangeException(nameof(items), "Row layout items limit exceeded.");
+            }
             layout.Widths.CopyFrom(widths, items);
         }
         layout.Items = items;
@@ -418,8 +472,11 @@ public class MuContext
         layout.ItemIndex = 0;
     }
 
-    public void LayoutWidth(int width) => GetLayout().Size.X = width;
-    public void LayoutHeight(int height) => GetLayout().Size.Y = height;
+    public void LayoutWidth(int width) =>
+        GetLayout().Size.X = width;
+
+    public void LayoutHeight(int height) =>
+        GetLayout().Size.Y = height;
 
     public void LayoutSetNext(MuRect r, bool relative)
     {
@@ -432,7 +489,7 @@ public class MuContext
     {
         ref MuLayout layout = ref GetLayout();
         MuStyle style = Style;
-        MuRect res = new MuRect();
+        MuRect res = new();
 
         if (layout.NextType != 0)
         {
@@ -456,10 +513,22 @@ public class MuContext
             res.W = layout.Items > 0 ? layout.Widths[layout.ItemIndex] : layout.Size.X;
             res.H = layout.Size.Y;
 
-            if (res.W == 0) res.W = style.Size.X + style.Padding * 2;
-            if (res.H == 0) res.H = style.Size.Y + style.Padding * 2;
-            if (res.W < 0) res.W += layout.Body.W - res.X + 1;
-            if (res.H < 0) res.H += layout.Body.H - res.Y + 1;
+            if (res.W == 0)
+            {
+                res.W = style.Size.X + style.Padding * 2;
+            }
+            if (res.H == 0)
+            {
+                res.H = style.Size.Y + style.Padding * 2;
+            }
+            if (res.W < 0)
+            {
+                res.W += layout.Body.W - res.X + 1;
+            }
+            if (res.H < 0)
+            {
+                res.H += layout.Body.H - res.Y + 1;
+            }
 
             layout.ItemIndex++;
         }
@@ -474,10 +543,12 @@ public class MuContext
         layout.Max.Y = int.Max(layout.Max.Y, res.Y + res.H);
 
         LastRect = res;
+
         return res;
     }
 
-    public void LayoutBeginColumn() => PushLayout(LayoutNext(), new MuVec2(0, 0));
+    public void LayoutBeginColumn() =>
+        PushLayout(LayoutNext(), new MuVec2(0, 0));
 
     public void LayoutEndColumn()
     {
@@ -494,7 +565,8 @@ public class MuContext
     // Input Receivers
     // ========================================================================
 
-    public void InputMouseMove(int x, int y) => MousePos = new MuVec2(x, y);
+    public void InputMouseMove(int x, int y) =>
+        MousePos = new MuVec2(x, y);
 
     public void InputMouseDown(int x, int y, MuMouse btn)
     {
@@ -521,9 +593,11 @@ public class MuContext
         KeyDown |= key;
     }
 
-    public void InputKeyUp(MuKey key) => KeyDown &= ~key;
+    public void InputKeyUp(MuKey key) =>
+        KeyDown &= ~key;
 
-    public void InputTextString(string text) => InputText += text;
+    public void InputTextString(string text) =>
+        InputText += text;
 
     // ========================================================================
     // Command Queue Pushing
@@ -532,8 +606,9 @@ public class MuContext
     public int PushCommand(MuCommandType type)
     {
         int idx = CommandList.Idx;
-        MuCommand cmd = new MuCommand { Type = type };
+        MuCommand cmd = new() { Type = type };
         CommandList.Push(cmd);
+
         return idx;
     }
 
@@ -564,13 +639,22 @@ public class MuContext
 
     public void DrawText(object font, string str, int len, MuVec2 pos, MuColor color)
     {
-        if (len < 0) len = str.Length;
+        if (len < 0)
+        {
+            len = str.Length;
+        }
         string subStr = str.Substring(0, len);
-        MuRect rect = new MuRect(pos.X, pos.Y, TextWidth(font, subStr, len), TextHeight(font));
+        MuRect rect = new(pos.X, pos.Y, TextWidth(font, subStr, len), TextHeight(font));
         MuClip clipped = CheckClip(rect);
-        if (clipped == MuClip.All) return;
+        if (clipped == MuClip.All)
+        {
+            return;
+        }
 
-        if (clipped == MuClip.Part) SetClip(GetClipRect());
+        if (clipped == MuClip.Part)
+        {
+            SetClip(GetClipRect());
+        }
 
         int idx = PushCommand(MuCommandType.Text);
         ref MuCommand cmd = ref CommandList.Items[idx];
@@ -579,15 +663,24 @@ public class MuContext
         cmd.Color = color;
         cmd.Str = subStr;
 
-        if (clipped != MuClip.None) SetClip(UnclippedRect);
+        if (clipped != MuClip.None)
+        {
+            SetClip(UnclippedRect);
+        }
     }
 
     public void DrawIcon(MuIcon iconType, MuRect rect, MuColor color)
     {
         MuClip clipped = CheckClip(rect);
-        if (clipped == MuClip.All) return;
+        if (clipped == MuClip.All)
+        {
+            return;
+        }
 
-        if (clipped == MuClip.Part) SetClip(GetClipRect());
+        if (clipped == MuClip.Part)
+        {
+            SetClip(GetClipRect());
+        }
 
         int idx = PushCommand(MuCommandType.Icon);
         ref MuCommand cmd = ref CommandList.Items[idx];
@@ -595,13 +688,17 @@ public class MuContext
         cmd.Rect = rect;
         cmd.Color = color;
 
-        if (clipped != MuClip.None) SetClip(UnclippedRect);
+        if (clipped != MuClip.None)
+        {
+            SetClip(UnclippedRect);
+        }
     }
 
     private int PushJump(int dstIdx)
     {
         int idx = PushCommand(MuCommandType.Jump);
         CommandList.Items[idx].JumpDstIdx = dstIdx;
+
         return idx;
     }
 
@@ -615,31 +712,41 @@ public class MuContext
         while (i-- > 0)
         {
             int cntIdx = ContainerStack.Items[i];
-            if (cntIdx == HoverRootIdx) return true;
-            if (Containers[cntIdx].HeadIdx != -1) break;
+            if (cntIdx == HoverRootIdx)
+            {
+                return true;
+            }
+            if (Containers[cntIdx].HeadIdx != -1)
+            {
+                break;
+            }
         }
+
         return false;
     }
 
     public void DrawControlFrame(uint id, MuRect rect, MuColorType colorType, MuOption opt)
     {
-        if ((opt & MuOption.NoFrame) != 0) return;
+        if ((opt & MuOption.NoFrame) != MuOption.None)
+        {
+            return;
+        }
         colorType += (Focus == id) ? 2 : (Hover == id) ? 1 : 0;
         DrawFrame(this, rect, colorType);
     }
 
     public void DrawControlText(string str, MuRect rect, MuColorType colorType, MuOption opt)
     {
-        MuVec2 pos = new MuVec2();
+        MuVec2 pos = new();
         object font = Style.Font!;
         int tw = TextWidth(font, str, -1);
         PushClipRect(rect);
         pos.Y = rect.Y + (rect.H - TextHeight(font)) / 2;
-        if ((opt & MuOption.AlignCenter) != 0)
+        if ((opt & MuOption.AlignCenter) != MuOption.None)
         {
             pos.X = rect.X + (rect.W - tw) / 2;
         }
-        else if ((opt & MuOption.AlignRight) != 0)
+        else if ((opt & MuOption.AlignRight) != MuOption.None)
         {
             pos.X = rect.X + rect.W - tw - Style.Padding;
         }
@@ -651,29 +758,48 @@ public class MuContext
         PopClipRect();
     }
 
-    public bool MouseOver(MuRect rect)
-    {
-        return RectOverlapsVec2(rect, MousePos) && RectOverlapsVec2(GetClipRect(), MousePos) && InHoverRoot();
-    }
+    public bool MouseOver(MuRect rect) =>
+        RectOverlapsVec2(rect, MousePos) && RectOverlapsVec2(GetClipRect(), MousePos) && InHoverRoot();
 
     public void UpdateControl(uint id, MuRect rect, MuOption opt)
     {
         bool mouseOver = MouseOver(rect);
-        if (Focus == id) UpdatedFocus = true;
-        if ((opt & MuOption.NoInteract) != 0) return;
+        if (Focus == id)
+        {
+            UpdatedFocus = true;
+        }
+        if ((opt & MuOption.NoInteract) != MuOption.None)
+        {
+            return;
+        }
 
-        if (mouseOver && MouseDown == MuMouse.None) Hover = id;
+        if (mouseOver && MouseDown == MuMouse.None)
+        {
+            Hover = id;
+        }
 
         if (Focus == id)
         {
-            if (MousePressed != MuMouse.None && !mouseOver) SetFocus(0);
-            if (MouseDown == MuMouse.None && (opt & MuOption.HoldFocus) == 0) SetFocus(0);
+            if (MousePressed != MuMouse.None && !mouseOver)
+            {
+                SetFocus(0);
+            }
+            if (MouseDown == MuMouse.None && (opt & MuOption.HoldFocus) == MuOption.None)
+            {
+                SetFocus(0);
+            }
         }
 
         if (Hover == id)
         {
-            if (MousePressed != MuMouse.None) SetFocus(id);
-            else if (!mouseOver) Hover = 0;
+            if (MousePressed != MuMouse.None)
+            {
+                SetFocus(id);
+            }
+            else if (!mouseOver)
+            {
+                Hover = 0;
+            }
         }
     }
 
@@ -687,7 +813,8 @@ public class MuContext
     // Primitive Elements (Label, Buttons, Checkboxes, Textboxes)
     // ========================================================================
 
-    public void Label(string text) => DrawControlText(text, LayoutNext(), MuColorType.Text, 0);
+    public void Label(string text) =>
+        DrawControlText(text, LayoutNext(), MuColorType.Text, 0);
 
     public void Text(string text)
     {
@@ -707,16 +834,28 @@ public class MuContext
             while (end < text.Length && text[end] != '\n')
             {
                 int word = p;
-                while (p < text.Length && text[p] != ' ' && text[p] != '\n') p++;
+                while (p < text.Length && text[p] != ' ' && text[p] != '\n')
+                {
+                    p++;
+                }
 
                 int wordLen = p - word;
                 w += TextWidth(font, text.Substring(word, wordLen), wordLen);
-                if (w > r.W && end != start) break;
+                if (w > r.W && end != start)
+                {
+                    break;
+                }
 
-                if (p < text.Length) w += TextWidth(font, text[p].ToString(), 1);
+                if (p < text.Length)
+                {
+                    w += TextWidth(font, text[p].ToString(), 1);
+                }
 
                 end = p;
-                if (p < text.Length && text[p] != '\n') p++;
+                if (p < text.Length && text[p] != '\n')
+                {
+                    p++;
+                }
             }
 
             int len = end - start;
@@ -729,20 +868,32 @@ public class MuContext
     public MuResult ButtonEx(string label, MuIcon icon = MuIcon.None, MuOption opt = MuOption.AlignCenter)
     {
         MuResult res = MuResult.None;
-        uint id = label != null ? GetId("button_" + label) : GetId(icon);
+        uint id = label != null
+            ? GetId("button_" + label)
+            : GetId(icon);
         MuRect r = LayoutNext();
         UpdateControl(id, r, opt);
 
-        if (MousePressed == MuMouse.Left && Focus == id) res |= MuResult.Submit;
+        if (MousePressed == MuMouse.Left && Focus == id)
+        {
+            res |= MuResult.Submit;
+        }
 
         DrawControlFrame(id, r, MuColorType.Button, opt);
-        if (label != null) DrawControlText(label, r, MuColorType.Text, opt);
-        if (icon != MuIcon.None) DrawIcon(icon, r, Style.Colors[MuColorType.Text]);
+        if (label != null)
+        {
+            DrawControlText(label, r, MuColorType.Text, opt);
+        }
+        if (icon != MuIcon.None)
+        {
+            DrawIcon(icon, r, Style.Colors[MuColorType.Text]);
+        }
 
         return res;
     }
 
-    public MuResult Button(string label) => ButtonEx(label, MuIcon.None, MuOption.AlignCenter);
+    public MuResult Button(string label) =>
+        ButtonEx(label, MuIcon.None, MuOption.AlignCenter);
 
     public MuResult Checkbox(string label, ref bool state)
     {
@@ -759,10 +910,14 @@ public class MuContext
         }
 
         DrawControlFrame(id, box, MuColorType.Base, 0);
-        if (state) DrawIcon(MuIcon.Check, box, Style.Colors[MuColorType.Text]);
+        if (state)
+        {
+            DrawIcon(MuIcon.Check, box, Style.Colors[MuColorType.Text]);
+        }
 
-        MuRect rText = new MuRect(r.X + box.W, r.Y, r.W - box.W, r.H);
+        MuRect rText = new(r.X + box.W, r.Y, r.W - box.W, r.H);
         DrawControlText(label, rText, MuColorType.Text, 0);
+
         return res;
     }
 
@@ -780,12 +935,12 @@ public class MuContext
                 buf += InputText;
                 res |= MuResult.Change;
             }
-            if ((KeyPressed & MuKey.Backspace) != 0 && buf.Length > 0)
+            if ((KeyPressed & MuKey.Backspace) != MuKey.None && buf.Length > 0)
             {
                 buf = buf.Substring(0, buf.Length - 1);
                 res |= MuResult.Change;
             }
-            if ((KeyPressed & MuKey.Return) != 0)
+            if ((KeyPressed & MuKey.Return) != MuKey.None)
             {
                 SetFocus(0);
                 res |= MuResult.Submit;
@@ -813,12 +968,14 @@ public class MuContext
         {
             DrawControlText(buf, r, MuColorType.Text, opt);
         }
+
         return res;
     }
 
     public MuResult Textbox(ref string buf, MuOption opt = MuOption.None, [CallerArgumentExpression(nameof(buf))] string expression = "")
     {
         uint id = GetId("textbox_" + expression);
+
         return TextboxRaw(ref buf, id, LayoutNext(), opt);
     }
 
@@ -828,7 +985,7 @@ public class MuContext
 
     private bool NumberTextbox(ref float value, MuRect r, uint id)
     {
-        if (MousePressed == MuMouse.Left && (KeyDown & MuKey.Shift) != 0 && Hover == id)
+        if (MousePressed == MuMouse.Left && (KeyDown & MuKey.Shift) != MuKey.None && Hover == id)
         {
             NumberEdit = id;
             NumberEditBuf = value.ToString("G3");
@@ -836,7 +993,7 @@ public class MuContext
         if (NumberEdit == id)
         {
             MuResult res = TextboxRaw(ref NumberEditBuf, id, r, 0);
-            if ((res & MuResult.Submit) != 0 || Focus != id)
+            if ((res & MuResult.Submit) != MuResult.None || Focus != id)
             {
                 if (float.TryParse(NumberEditBuf, out float parsedVal))
                 {
@@ -849,6 +1006,7 @@ public class MuContext
                 return true;
             }
         }
+
         return false;
     }
 
@@ -870,11 +1028,17 @@ public class MuContext
         if (Focus == id && (MouseDown | MousePressed) == MuMouse.Left)
         {
             v = low + (MousePos.X - r.X) * (high - low) / r.W;
-            if (step != 0) v = float.Round(v / step) * step;
+            if (step != 0)
+            {
+                v = float.Round(v / step) * step;
+            }
         }
 
         value = float.Clamp(v, low, high);
-        if (last != value) res |= MuResult.Change;
+        if (last != value)
+        {
+            res |= MuResult.Change;
+        }
 
         DrawControlFrame(id, r, MuColorType.Base, opt);
         int w = Style.ThumbSize;
@@ -883,6 +1047,7 @@ public class MuContext
         DrawControlFrame(id, thumb, MuColorType.Button, opt);
 
         DrawControlText(value.ToString(fmt), r, MuColorType.Text, opt);
+
         return res;
     }
 
@@ -893,7 +1058,10 @@ public class MuContext
         MuRect baseRect = LayoutNext();
         float last = value;
 
-        if (NumberTextbox(ref value, baseRect, id)) return res;
+        if (NumberTextbox(ref value, baseRect, id))
+        {
+            return res;
+        }
 
         UpdateControl(id, baseRect, opt);
         if (Focus == id && MouseDown == MuMouse.Left)
@@ -901,10 +1069,14 @@ public class MuContext
             value += MouseDelta.X * step;
         }
 
-        if (value != last) res |= MuResult.Change;
+        if (value != last)
+        {
+            res |= MuResult.Change;
+        }
 
         DrawControlFrame(id, baseRect, MuColorType.Base, opt);
         DrawControlText(value.ToString(fmt), baseRect, MuColorType.Text, opt);
+
         return res;
     }
 
@@ -916,18 +1088,29 @@ public class MuContext
     {
         uint id = GetId(label);
         int idx = PoolGet(TreeNodePool, TreeNodePoolSize, id);
-        LayoutRow(1, new[] { -1 }, 0);
+        LayoutRow(1, [-1], 0);
         bool active = (idx >= 0);
-        bool expanded = ((opt & MuOption.Expanded) != 0) ? !active : active;
+        bool expanded = ((opt & MuOption.Expanded) != MuOption.None)
+            ? !active
+            : active;
         MuRect r = LayoutNext();
         UpdateControl(id, r, 0);
 
-        if (MousePressed == MuMouse.Left && Focus == id) active = !active;
+        if (MousePressed == MuMouse.Left && Focus == id)
+        {
+            active = !active;
+        }
 
         if (idx >= 0)
         {
-            if (active) PoolUpdate(TreeNodePool, idx);
-            else TreeNodePool[idx] = new MuPoolItem();
+            if (active)
+            {
+                PoolUpdate(TreeNodePool, idx);
+            }
+            else
+            {
+                TreeNodePool[idx] = new MuPoolItem();
+            }
         }
         else if (active)
         {
@@ -936,32 +1119,41 @@ public class MuContext
 
         if (isTreeNode)
         {
-            if (Hover == id) DrawFrame(this, r, MuColorType.ButtonHover);
+            if (Hover == id)
+            {
+                DrawFrame(this, r, MuColorType.ButtonHover);
+            }
         }
         else
         {
             DrawControlFrame(id, r, MuColorType.Button, 0);
         }
 
-        MuIcon iconType = expanded ? MuIcon.Expanded : MuIcon.Collapsed;
+        MuIcon iconType = expanded
+            ? MuIcon.Expanded
+            : MuIcon.Collapsed;
         DrawIcon(iconType, new MuRect(r.X, r.Y, r.H, r.H), Style.Colors[MuColorType.Text]);
 
-        MuRect rText = new MuRect(r.X + r.H - Style.Padding, r.Y, r.W - r.H + Style.Padding, r.H);
+        MuRect rText = new(r.X + r.H - Style.Padding, r.Y, r.W - r.H + Style.Padding, r.H);
         DrawControlText(label, rText, MuColorType.Text, 0);
 
-        return expanded ? MuResult.Active : MuResult.None;
+        return expanded
+            ? MuResult.Active
+            : MuResult.None;
     }
 
-    public MuResult Header(string label, MuOption opt = MuOption.None) => Header(label, false, opt);
+    public MuResult Header(string label, MuOption opt = MuOption.None) =>
+        Header(label, false, opt);
 
     public MuResult BeginTreeNode(string label, MuOption opt = MuOption.None)
     {
         MuResult res = Header(label, true, opt);
-        if ((res & MuResult.Active) != 0)
+        if ((res & MuResult.Active) != MuResult.None)
         {
             GetLayout().Indent += Style.Indent;
             IdStack.Push(LastId);
         }
+
         return res;
     }
 
@@ -977,9 +1169,15 @@ public class MuContext
 
     private void Scrollbar(int cntIdx, ref MuRect body, MuVec2 cs, bool isVertical)
     {
-        ref int scroll = ref isVertical ? ref Containers[cntIdx].Scroll.Y : ref Containers[cntIdx].Scroll.X;
-        int bodySize = isVertical ? body.H : body.W;
-        int contentSize = isVertical ? cs.Y : cs.X;
+        ref int scroll = ref isVertical
+            ? ref Containers[cntIdx].Scroll.Y
+            : ref Containers[cntIdx].Scroll.X;
+        int bodySize = isVertical
+            ? body.H
+            : body.W;
+        int contentSize = isVertical
+            ? cs.Y
+            : cs.X;
         int maxScroll = contentSize - bodySize;
 
         if (maxScroll > 0 && bodySize > 0)
@@ -1021,7 +1219,10 @@ public class MuContext
             }
             DrawFrame(this, thumb, MuColorType.ScrollThumb);
 
-            if (MouseOver(body)) ScrollTargetIdx = cntIdx;
+            if (MouseOver(body))
+            {
+                ScrollTargetIdx = cntIdx;
+            }
         }
         else
         {
@@ -1037,8 +1238,14 @@ public class MuContext
         cs.Y += Style.Padding * 2;
 
         PushClipRect(body);
-        if (cs.Y > Containers[cntIdx].Body.H) body.W -= sz;
-        if (cs.X > Containers[cntIdx].Body.W) body.H -= sz;
+        if (cs.Y > Containers[cntIdx].Body.H)
+        {
+            body.W -= sz;
+        }
+        if (cs.X > Containers[cntIdx].Body.W)
+        {
+            body.H -= sz;
+        }
 
         Scrollbar(cntIdx, ref body, cs, true);  // Vertical
         Scrollbar(cntIdx, ref body, cs, false); // Horizontal
@@ -1047,7 +1254,10 @@ public class MuContext
 
     private void PushContainerBody(int cntIdx, MuRect body, MuOption opt)
     {
-        if ((opt & MuOption.NoScroll) == 0) Scrollbars(cntIdx, ref body);
+        if ((opt & MuOption.NoScroll) == MuOption.None)
+        {
+            Scrollbars(cntIdx, ref body);
+        }
         PushLayout(ExpandRect(body, -Style.Padding), Containers[cntIdx].Scroll);
         Containers[cntIdx].Body = body;
     }
@@ -1088,18 +1298,27 @@ public class MuContext
     {
         uint id = GetId(title);
         int cntIdx = GetContainerIdx(id, opt);
-        if (cntIdx == -1 || !Containers[cntIdx].Open) return MuResult.None;
+        if (cntIdx == -1 || !Containers[cntIdx].Open)
+        {
+            return MuResult.None;
+        }
 
         IdStack.Push(id);
-        if (Containers[cntIdx].Rect.W == 0) Containers[cntIdx].Rect = rect;
+        if (Containers[cntIdx].Rect.W == 0)
+        {
+            Containers[cntIdx].Rect = rect;
+        }
 
         BeginRootContainer(cntIdx);
         rect = Containers[cntIdx].Rect;
         MuRect body = rect;
 
-        if ((opt & MuOption.NoFrame) == 0) DrawFrame(this, rect, MuColorType.WindowBg);
+        if ((opt & MuOption.NoFrame) == MuOption.None)
+        {
+            DrawFrame(this, rect, MuColorType.WindowBg);
+        }
 
-        if ((opt & MuOption.NotTitle) == 0)
+        if ((opt & MuOption.NotTitle) == MuOption.None)
         {
             MuRect tr = rect;
             tr.H = Style.TitleHeight;
@@ -1117,10 +1336,10 @@ public class MuContext
             body.Y += tr.H;
             body.H -= tr.H;
 
-            if ((opt & MuOption.NoClose) == 0)
+            if ((opt & MuOption.NoClose) == MuOption.None)
             {
                 uint closeId = GetId("!close");
-                MuRect rClose = new MuRect(tr.X + tr.W - tr.H, tr.Y, tr.H, tr.H);
+                MuRect rClose = new(tr.X + tr.W - tr.H, tr.Y, tr.H, tr.H);
                 tr.W -= rClose.W;
                 DrawIcon(MuIcon.Close, rClose, Style.Colors[MuColorType.TitleText]);
                 UpdateControl(closeId, rClose, opt);
@@ -1133,11 +1352,11 @@ public class MuContext
 
         PushContainerBody(cntIdx, body, opt);
 
-        if ((opt & MuOption.NoResize) == 0)
+        if ((opt & MuOption.NoResize) == MuOption.None)
         {
             int sz = Style.TitleHeight;
             uint resizeId = GetId("!resize");
-            MuRect rResize = new MuRect(rect.X + rect.W - sz, rect.Y + rect.H - sz, sz, sz);
+            MuRect rResize = new(rect.X + rect.W - sz, rect.Y + rect.H - sz, sz, sz);
             UpdateControl(resizeId, rResize, opt);
             if (resizeId == Focus && MouseDown == MuMouse.Left)
             {
@@ -1146,19 +1365,20 @@ public class MuContext
             }
         }
 
-        if ((opt & MuOption.AutoSize) != 0)
+        if ((opt & MuOption.AutoSize) != MuOption.None)
         {
             MuRect rBody = GetLayout().Body;
             Containers[cntIdx].Rect.W = Containers[cntIdx].ContentSize.X + (Containers[cntIdx].Rect.W - rBody.W);
             Containers[cntIdx].Rect.H = Containers[cntIdx].ContentSize.Y + (Containers[cntIdx].Rect.H - rBody.H);
         }
 
-        if ((opt & MuOption.Popup) != 0 && MousePressed != 0 && HoverRootIdx != cntIdx)
+        if ((opt & MuOption.Popup) != MuOption.None && MousePressed != MuMouse.None && HoverRootIdx != cntIdx)
         {
             Containers[cntIdx].Open = false;
         }
 
         PushClipRect(Containers[cntIdx].Body);
+
         return MuResult.Active;
     }
 
@@ -1184,14 +1404,15 @@ public class MuContext
         return BeginWindowEx(name, new MuRect(0, 0, 0, 0), opt);
     }
 
-    public void EndPopup() => EndWindow();
+    public void EndPopup() =>
+        EndWindow();
 
     public void BeginPanelEx(string name, MuOption opt = MuOption.None)
     {
         PushId(name);
         int cntIdx = GetContainerIdx(LastId, opt);
         Containers[cntIdx].Rect = LayoutNext();
-        if ((opt & MuOption.NoFrame) == 0)
+        if ((opt & MuOption.NoFrame) == MuOption.None)
         {
             DrawFrame(this, Containers[cntIdx].Rect, MuColorType.PanelBg);
         }
@@ -1206,18 +1427,16 @@ public class MuContext
         PopContainer();
     }
 
-    // Overloaded conveniences mapping directly to C preprocessor macros
-    public MuResult BeginWindow(string title, MuRect rect) => BeginWindowEx(title, rect, MuOption.None);
-    public void BeginPanel(string name) => BeginPanelEx(name, MuOption.None);
+    public MuResult BeginWindow(string title, MuRect rect) =>
+        BeginWindowEx(title, rect, MuOption.None);
+
+    public void BeginPanel(string name) =>
+        BeginPanelEx(name, MuOption.None);
 
     // ========================================================================
     // Traversal Logic (Command List Parser Pipeline)
     // ========================================================================
 
-    /// <summary>
-    /// Highly optimized, completely allocation-free parser pipeline for rendering.
-    /// Call with command index initialized to -1.
-    /// </summary>
     public bool NextCommand(ref int cmdIdx, out MuCommand cmd)
     {
         cmdIdx = (cmdIdx < 0) ? 0 : cmdIdx + 1;
@@ -1233,12 +1452,10 @@ public class MuContext
         }
 
         cmd = default;
+
         return false;
     }
 
-    /// <summary>
-    /// Standard C# iterator for rendering commands (requires tiny heap-alloc for state machine).
-    /// </summary>
     public IEnumerable<MuCommand> GetCommands()
     {
         int cmdIdx = -1;
