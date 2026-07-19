@@ -8,7 +8,7 @@ using Avalonia.Threading;
 
 namespace abremir.SmallGui;
 
-public class MicroUiControl : Control
+internal class MicroUiControl : Control
 {
     private readonly MuContext _mu = new MuContext();
     private readonly Action<MuContext> _layoutBuilder;
