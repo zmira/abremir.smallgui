@@ -1,0 +1,42 @@
+name: NuGet Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  id-token: write # enable GitHub OIDC token issuance for this job
+
+env:
+  PACKAGE_NAME: abremir.SmallGui
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10
+
+      - name: Restore dependencies
+        run: dotnet restore ./source/${{ env.PACKAGE_NAME }}
+
+      - name: Build
+        run: dotnet build ./source/${{ env.PACKAGE_NAME }} --no-restore --configuration Release
+
+      - name: Create NuGet Package
+        run: dotnet pack ./source/${{ env.PACKAGE_NAME }} --configuration Release -p:PackageVersion=${GITHUB_REF_NAME#v} --no-build --output ./artifacts
+
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+    
+      - name: NuGet push
+        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
